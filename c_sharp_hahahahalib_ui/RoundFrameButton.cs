@@ -9,292 +9,216 @@ namespace hahahalib
 {
     namespace ui
     {
-        
-		public class ToggleButton : Control
-		{
-			private bool isToggled;
-			private Rectangle sliderRectangle;
-			private Timer animationTimer;
-			private int animationSpeed = 10;
-			private bool isHovered = false;
+        public class RoundFrameButton : Control
+        {
+            // 定义按钮的渐变色的起始和结束颜色（使用亮绿色组合）
+            private Color normalColorStart = Color.LimeGreen;
+            private Color normalColorEnd = Color.LightGreen;
+            private Color hoverColorStart = Color.ForestGreen;
+            private Color hoverColorEnd = Color.MediumSeaGreen;
+            private Color pressedColorStart = Color.SeaGreen;
+            private Color pressedColorEnd = Color.DarkOliveGreen;
 
-			private Color sliderColor = Color.White;
-			private Color sliderHoverColor = Color.LightYellow; // 滑塊懸停顏色
-			private Color normalColor = Color.Gray;
-			private Color toggledBackColor = Color.Green;
+            // 定义边框的颜色和宽度
+            private Color borderColor = Color.DarkGreen;
+            private int borderWidth = 2; // 默认边框宽度为2
+            private int borderInset = 4; // 边框内缩的距离
 
-			private Color borderColor = Color.Black;
-			private int borderThickness = 2;
-			private int cornerRadius = 25;
+            private bool isHover = false;
+            private bool isPressed = false;
 
-			private Color hoverBackColor = Color.DarkGray;
-			private bool useHoverEffect = true;
+            // 正常状态颜色渐变的起始和结束颜色属性
+            public Color NormalColorStart
+            {
+                get { return normalColorStart; }
+                set { normalColorStart = value; Invalidate(); }
+            }
 
-			public event EventHandler CheckedChanged;
+            public Color NormalColorEnd
+            {
+                get { return normalColorEnd; }
+                set { normalColorEnd = value; Invalidate(); }
+            }
 
-			public ToggleButton()
-			{
-				this.Size = new Size(100, 50);
-				this.ForeColor = Color.White;
-				this.Cursor = Cursors.Hand;
-				this.sliderRectangle = new Rectangle(3, 3, this.Height - 6, this.Height - 6);
+            // 悬停状态颜色渐变的起始和结束颜色属性
+            public Color HoverColorStart
+            {
+                get { return hoverColorStart; }
+                set { hoverColorStart = value; Invalidate(); }
+            }
 
-				// ✅ 啟用雙緩衝以防閃爍
-				this.SetStyle(ControlStyles.AllPaintingInWmPaint |
-							  ControlStyles.OptimizedDoubleBuffer |
-							  ControlStyles.ResizeRedraw |
-							  ControlStyles.UserPaint, true);
-				this.UpdateStyles();
+            public Color HoverColorEnd
+            {
+                get { return hoverColorEnd; }
+                set { hoverColorEnd = value; Invalidate(); }
+            }
 
-				animationTimer = new Timer();
-				animationTimer.Interval = 10;
-				animationTimer.Tick += AnimationTimer_Tick;
+            // 按下状态颜色渐变的起始和结束颜色属性
+            public Color PressedColorStart
+            {
+                get { return pressedColorStart; }
+                set { pressedColorStart = value; Invalidate(); }
+            }
 
-				this.Click += ToggleButton_Click;
-				this.MouseEnter += (s, e) => { isHovered = true; Invalidate(); };
-				this.MouseLeave += (s, e) => { isHovered = false; Invalidate(); };
+            public Color PressedColorEnd
+            {
+                get { return pressedColorEnd; }
+                set { pressedColorEnd = value; Invalidate(); }
+            }
 
-				SetButtonRegion();
-			}
+            // 边框颜色属性
+            public Color BorderColor
+            {
+                get { return borderColor; }
+                set { borderColor = value; Invalidate(); }
+            }
 
-			private void SetButtonRegion()
-			{
-				// 使用圓形區域
-				if (this.Width == this.Height)
-				{
-					using (GraphicsPath path = new GraphicsPath())
-					{
-						path.AddEllipse(0, 0, this.Width, this.Height);
-						this.Region = new Region(path);
-					}
-				}
-				else
-				{
-					using (GraphicsPath path = new GraphicsPath())
-					{
-						path.AddArc(0, 0, cornerRadius, cornerRadius, 180, 90);
-						path.AddArc(this.Width - cornerRadius, 0, cornerRadius, cornerRadius, 270, 90);
-						path.AddArc(this.Width - cornerRadius, this.Height - cornerRadius, cornerRadius, cornerRadius, 0, 90);
-						path.AddArc(0, this.Height - cornerRadius, cornerRadius, cornerRadius, 90, 90);
-						path.CloseAllFigures();
-						this.Region = new Region(path);
-					}
-				}
-			}
+            // 边框宽度属性，默认值为2
+            public int BorderWidth
+            {
+                get { return borderWidth; }
+                set { borderWidth = value; Invalidate(); }
+            }
 
-			private void ToggleButton_Click(object sender, EventArgs e)
-			{
-				if (animationTimer.Enabled) return;
+            // 边框内缩属性
+            public int BorderInset
+            {
+                get { return borderInset; }
+                set { borderInset = value; Invalidate(); }
+            }
 
-				isToggled = !isToggled;
-				animationTimer.Start();
-				CheckedChanged?.Invoke(this, EventArgs.Empty);
-				Invalidate();
-			}
+            public RoundFrameButton()
+            {
+                // 设置样式，启用双缓冲和透明背景
+                this.SetStyle(
+                    ControlStyles.AllPaintingInWmPaint |
+                    ControlStyles.UserPaint |
+                    ControlStyles.ResizeRedraw |
+                    ControlStyles.OptimizedDoubleBuffer |
+                    ControlStyles.SupportsTransparentBackColor,
+                    true);
 
-			private void AnimationTimer_Tick(object sender, EventArgs e)
-			{
-				int targetX = isToggled ? this.Width - sliderRectangle.Width - 3 : 3;
+                this.BackColor = Color.Transparent;
+                this.ForeColor = Color.White;  // 默认文字颜色
+                this.Font = new Font("Arial", 10, FontStyle.Bold); // 默认字体
+                this.Size = new Size(100, 40); // 默认大小
+            }
 
-				if (sliderRectangle.X < targetX)
-				{
-					sliderRectangle.X += animationSpeed;
-					if (sliderRectangle.X > targetX) sliderRectangle.X = targetX;
-				}
-				else if (sliderRectangle.X > targetX)
-				{
-					sliderRectangle.X -= animationSpeed;
-					if (sliderRectangle.X < targetX) sliderRectangle.X = targetX;
-				}
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);
 
-				if (sliderRectangle.X == targetX)
-				{
-					animationTimer.Stop();
-				}
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-				Invalidate();
-			}
+                // 清除背景为父容器背景色
+                if (this.Parent != null)
+                    e.Graphics.Clear(this.Parent.BackColor);
+                else
+                    e.Graphics.Clear(SystemColors.Control);
 
-			private void DrawRoundedRectangle(Graphics g, Brush brush, Rectangle rect, int radius)
-			{
-				using (GraphicsPath path = new GraphicsPath())
-				{
-					path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
-					path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
-					path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
-					path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
-					path.CloseAllFigures();
-					g.FillPath(brush, path);
-				}
-			}
+                // 根据按钮的状态选择渐变色
+                LinearGradientBrush brush = null;
+                Rectangle rect = this.ClientRectangle;
+                GraphicsPath path = new GraphicsPath();
 
-			protected override void OnPaint(PaintEventArgs e)
-			{
-				base.OnPaint(e);
+                int radius = 30;
+                path.AddArc(borderInset, borderInset, radius, radius, 180, 90);
+                path.AddArc(rect.Width - radius - borderInset, borderInset, radius, radius, 270, 90);
+                path.AddArc(rect.Width - radius - borderInset, rect.Height - radius - borderInset, radius, radius, 0, 90);
+                path.AddArc(borderInset, rect.Height - radius - borderInset, radius, radius, 90, 90);
+                path.CloseFigure();
 
-				e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-				e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                this.Region = new Region(path);
 
-				// 內縮比例，防止鋸齒
-				int inset = 2;
+                // 创建渐变色刷子
+                if (isPressed)
+                {
+                    // 按下状态的渐变
+                    brush = new LinearGradientBrush(rect, pressedColorStart, pressedColorEnd, LinearGradientMode.Vertical);
+                }
+                else if (isHover)
+                {
+                    // 悬停状态的渐变
+                    brush = new LinearGradientBrush(rect, hoverColorStart, hoverColorEnd, LinearGradientMode.Vertical);
+                }
+                else
+                {
+                    // 默认状态的渐变
+                    brush = new LinearGradientBrush(rect, normalColorStart, normalColorEnd, LinearGradientMode.Vertical);
+                }
 
-				// 根據是否被點擊或滑鼠是否移入選擇背景顏色
-				Color backColorToUse = normalColor;
-				if (isHovered && useHoverEffect)
-					backColorToUse = hoverBackColor;
-				if (isToggled)
-					backColorToUse = toggledBackColor;
+                // 填充按钮背景颜色
+                e.Graphics.FillPath(brush, path);
 
-				// 設定內縮後的矩形範圍
-				Rectangle backgroundRect = new Rectangle(inset, inset, this.Width - 2 * inset, this.Height - 2 * inset);
+                // 绘制文字
+                using (Brush textBrush = new SolidBrush(this.ForeColor))
+                {
+                    StringFormat format = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center
+                    };
+                    e.Graphics.DrawString(this.Text, this.Font, textBrush, rect, format);
+                }
 
-				using (Brush bgBrush = new SolidBrush(backColorToUse))
-				{
-					DrawRoundedRectangle(e.Graphics, bgBrush, backgroundRect, cornerRadius);
-				}
+                // 绘制按钮边框
+                if (borderWidth > 0)
+                {
+                    using (Pen borderPen = new Pen(borderColor, borderWidth))
+                    {
+                        borderPen.StartCap = LineCap.Round;
+                        borderPen.EndCap = LineCap.Round;
+                        borderPen.LineJoin = LineJoin.Round;
 
-				// Toggled 狀態左半
-				if (isToggled)
-				{
-					int leftWidth = (int)(this.Width * 0.6) - inset; // 左半部分內縮
-					Rectangle leftHalf = new Rectangle(inset, inset, leftWidth, this.Height - 2 * inset);
-					using (Brush toggledBrush = new SolidBrush(toggledBackColor))
-					{
-						DrawRoundedRectangle(e.Graphics, toggledBrush, leftHalf, cornerRadius);
-					}
-				}
+                        // 使用内缩后的矩形绘制边框
+                        Rectangle borderRect = new Rectangle(rect.X + borderInset, rect.Y + borderInset, rect.Width - 2 * borderInset, rect.Height - 2 * borderInset);
+                        e.Graphics.DrawPath(borderPen, path);
+                    }
+                }
 
-				// 滑塊顏色：根據滑鼠是否懸停來變化
-				Color sliderBrushColor = isHovered ? sliderHoverColor : sliderColor;
-				Rectangle sliderRect = new Rectangle(sliderRectangle.X + inset, inset, sliderRectangle.Width, this.Height - 2 * inset);
-				using (Brush sliderBrush = new SolidBrush(sliderBrushColor))
-				{
-					DrawRoundedRectangle(e.Graphics, sliderBrush, sliderRect, sliderRect.Height / 2);
-				}
+                // 清理资源
+                brush.Dispose();
+            }
 
-				// 邊框（圓角）
-				using (GraphicsPath borderPath = new GraphicsPath())
-				{
-					if (this.Width == this.Height)
-					{
-						borderPath.AddEllipse(0, 0, this.Width, this.Height);
-					}
-					else
-					{
-						borderPath.AddArc(0, 0, cornerRadius, cornerRadius, 180, 90);
-						borderPath.AddArc(this.Width - cornerRadius, 0, cornerRadius, cornerRadius, 270, 90);
-						borderPath.AddArc(this.Width - cornerRadius, this.Height - cornerRadius, cornerRadius, cornerRadius, 0, 90);
-						borderPath.AddArc(0, this.Height - cornerRadius, cornerRadius, cornerRadius, 90, 90);
-					}
+            protected override void OnMouseEnter(EventArgs e)
+            {
+                base.OnMouseEnter(e);
+                isHover = true;
+                Invalidate();
+            }
 
-					borderPath.CloseAllFigures();
-					using (Pen borderPen = new Pen(borderColor, borderThickness))
-					{
-						borderPen.Alignment = PenAlignment.Inset;
-						e.Graphics.DrawPath(borderPen, borderPath);
-					}
-				}
-			}
+            protected override void OnMouseLeave(EventArgs e)
+            {
+                base.OnMouseLeave(e);
+                isHover = false;
+                isPressed = false;
+                Invalidate();
+            }
 
-			protected override void OnResize(EventArgs e)
-			{
-				base.OnResize(e);
-				sliderRectangle = new Rectangle(3, 3, this.Height - 6, this.Height - 6);
-				SetButtonRegion();
-				Invalidate();
-			}
+            protected override void OnMouseDown(MouseEventArgs e)
+            {
+                base.OnMouseDown(e);
+                isPressed = true;
+                Invalidate();
+            }
 
-			// ===== 公開屬性 =====
+            protected override void OnMouseUp(MouseEventArgs e)
+            {
+                base.OnMouseUp(e);
+                isPressed = false;
+                Invalidate();
+            }
 
-			[Browsable(true)]
-			[Category("Appearance")]
-			public bool IsToggled
-			{
-				get => isToggled;
-				set
-				{
-					if (isToggled != value)
-					{
-						isToggled = value;
-						sliderRectangle.X = isToggled ? this.Width - sliderRectangle.Width - 3 : 3;
-						CheckedChanged?.Invoke(this, EventArgs.Empty);
-						Invalidate();
-					}
-				}
-			}
-
-			[Browsable(true)]
-			[Category("Appearance")]
-			public Color BorderColor
-			{
-				get => borderColor;
-				set { borderColor = value; Invalidate(); }
-			}
-
-			[Browsable(true)]
-			[Category("Appearance")]
-			public int BorderThickness
-			{
-				get => borderThickness;
-				set { borderThickness = Math.Max(1, value); Invalidate(); }
-			}
-
-			[Browsable(true)]
-			[Category("Appearance")]
-			public int CornerRadius
-			{
-				get => cornerRadius;
-				set { cornerRadius = Math.Max(0, value); SetButtonRegion(); Invalidate(); }
-			}
-
-			[Browsable(true)]
-			[Category("Appearance")]
-			public Color NormalColor
-			{
-				get => normalColor;
-				set { normalColor = value; Invalidate(); }
-			}
-
-			[Browsable(true)]
-			[Category("Appearance")]
-			public Color ToggledBackColor
-			{
-				get => toggledBackColor;
-				set { toggledBackColor = value; Invalidate(); }
-			}
-
-			[Browsable(true)]
-			[Category("Appearance")]
-			public Color SliderColor
-			{
-				get => sliderColor;
-				set { sliderColor = value; Invalidate(); }
-			}
-
-			[Browsable(true)]
-			[Category("Appearance")]
-			public Color SliderHoverColor
-			{
-				get => sliderHoverColor;
-				set { sliderHoverColor = value; Invalidate(); }
-			}
-
-			[Browsable(true)]
-			[Category("Appearance")]
-			public Color HoverBackColor
-			{
-				get => hoverBackColor;
-				set { hoverBackColor = value; Invalidate(); }
-			}
-
-			[Browsable(true)]
-			[Category("Behavior")]
-			public bool UseHoverEffect
-			{
-				get => useHoverEffect;
-				set { useHoverEffect = value; Invalidate(); }
-			}
-		}
-        
+            protected override void OnMouseMove(MouseEventArgs e)
+            {
+                base.OnMouseMove(e);
+                if (!this.ClientRectangle.Contains(e.Location) && isHover)
+                {
+                    isHover = false;
+                    Invalidate();
+                }
+            }
+        }
     }
 }
